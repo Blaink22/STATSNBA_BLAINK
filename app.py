@@ -87,7 +87,14 @@ with tabs[3]:
             fecha = df_fecha.iloc[0, 0] if pd.notna(df_fecha.iloc[0, 0]) else "Sin fecha"
             df_data = pd.read_excel("apuesta_dia.xlsx", skiprows=2)
             st.markdown(f"📅 Última actualización: **{fecha}**")
-            st.dataframe(df_data, use_container_width=True)
+            # Expansión visual de la tabla para evitar scroll horizontal
+    st.dataframe(
+        df_data.style.set_properties(**{
+            "white-space": "pre-wrap"
+        }),
+        use_container_width=True,
+        hide_index=True
+    )
         except Exception as e:
             st.error(f"❌ Error al leer 'apuesta_dia.xlsx': {e}")
     else:
