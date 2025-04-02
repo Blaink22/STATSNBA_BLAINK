@@ -1,7 +1,6 @@
 
 import streamlit as st
 import pandas as pd
-import openpyxl
 
 st.set_page_config(page_title="NBA Stats Analyzer", layout="centered")
 
@@ -15,15 +14,17 @@ if not st.session_state["ingreso"]:
 
     st.markdown("---")
     archivo_demo = st.file_uploader("Subí el archivo de la Apuesta del Día para continuar (Excel)", type=["xlsx"], key="bienvenida")
+
+    fecha_actual = "Sin archivo cargado"
     if archivo_demo:
         try:
-            wb = openpyxl.load_workbook(archivo_demo, data_only=True)
-            hoja = wb.active
-            fecha_actual = hoja["A1"].value
-            if fecha_actual:
-                st.markdown(f"📅 Última actualización: **{fecha_actual}**")
+            df_fecha = pd.read_excel(archivo_demo, header=None)
+            if not df_fecha.empty and pd.notna(df_fecha.iloc[0, 0]):
+                fecha_actual = df_fecha.iloc[0, 0]
         except:
-            st.warning("No se pudo leer la fecha desde el archivo.")
+            fecha_actual = "Error al leer fecha"
+
+    st.markdown(f"📅 Última actualización: **{fecha_actual}**")
 
     if st.button("Ingresar al análisis"):
         st.session_state["ingreso"] = True
