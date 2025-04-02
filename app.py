@@ -1,6 +1,7 @@
 
 import streamlit as st
 import pandas as pd
+import os
 
 st.set_page_config(page_title="NBA Stats Analyzer", layout="centered")
 st.title("🏀 NBA Stats Analyzer")
@@ -77,12 +78,18 @@ with tabs[2]:
 # ---------- TAB 4 ----------
 with tabs[3]:
     st.subheader("📋 Apuesta del Día")
+st.markdown("📝 Esta apuesta fue actualizada manualmente por **@BlainkEiou**.")
+st.markdown("📬 Ante cualquier duda o sugerencia, contactame por Telegram: [@BlainkEiou](https://t.me/BlainkEiou)")
 
-    archivo = st.file_uploader("Subí el archivo Excel con las apuestas", type=["xlsx"], key="apuestas")
-    if archivo:
+
+    if os.path.exists("apuesta_dia.xlsx"):
         try:
-            df = pd.read_excel(archivo)
-            st.success("✅ Apuestas cargadas correctamente")
-            st.dataframe(df, use_container_width=True)
-        except:
-            st.error("❌ Error al leer el archivo. Asegurate que sea formato Excel (.xlsx)")
+            df_fecha = pd.read_excel("apuesta_dia.xlsx", header=None)
+            fecha = df_fecha.iloc[0, 0] if pd.notna(df_fecha.iloc[0, 0]) else "Sin fecha"
+            df_data = pd.read_excel("apuesta_dia.xlsx", skiprows=2)
+            st.markdown(f"📅 Última actualización: **{fecha}**")
+            st.dataframe(df_data, use_container_width=True)
+        except Exception as e:
+            st.error(f"❌ Error al leer 'apuesta_dia.xlsx': {e}")
+    else:
+        st.warning("⚠️ Aún no se ha cargado el archivo 'apuesta_dia.xlsx'. Subilo al repositorio para mostrarlo aquí.")
