@@ -78,9 +78,8 @@ with tabs[2]:
 # ---------- TAB 4 ----------
 with tabs[3]:
     st.subheader("📋 Apuesta del Día")
-st.markdown("📝 Esta apuesta fue actualizada manualmente por **@BlainkEiou**.")
-st.markdown("📬 Ante cualquier duda o sugerencia, contactame por Telegram: [@BlainkEiou](https://t.me/BlainkEiou)")
-
+    st.markdown("📝 Esta apuesta fue actualizada manualmente por **@BlainkEiou**.")
+    st.markdown("📬 Ante cualquier duda o sugerencia, contactame por Telegram: [@BlainkEiou](https://t.me/BlainkEiou)")
 
     if os.path.exists("apuesta_dia.xlsx"):
         try:
