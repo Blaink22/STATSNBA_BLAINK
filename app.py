@@ -5,70 +5,62 @@ import pandas as pd
 st.set_page_config(page_title="NBA Stats Analyzer", layout="wide")
 st.title("🏀 NBA Stats Analyzer")
 
-tabs = st.tabs(["Dobles Realizados", "Dobles Intentados", "Estadísticas Completas", "Apuesta del Día"])
+tabs = st.tabs(["Dobles Realizados", "Dobles Intentados", "Estadísticas Completas"])
 
-# Utilidad: resetear datos
-def reset_dataframe(columns, key):
-    if st.button("🗑️ Borrar datos", key=f"reset_{key}"):
-        st.session_state[key] = pd.DataFrame({col: [None]*10 for col in columns})
-        st.success("✅ Datos reiniciados correctamente")
-    return st.session_state.get(key, pd.DataFrame({col: [None]*10 for col in columns}))
+# Datos iniciales vacíos
+def create_empty_df_realizados():
+    return pd.DataFrame({ "Puntos": [None]*10, "Triples": [None]*10, "Libres": [None]*10 })
 
-# --- Dobles Realizados ---
+def create_empty_df_intentados():
+    return pd.DataFrame({ "FGA (Tiros de campo intentados)": [None]*10, "Triples intentados": [None]*10 })
+
+def create_empty_df_completas():
+    return pd.DataFrame({ "Puntos": [None]*10, "Triples": [None]*10, "Libres": [None]*10, "FGA": [None]*10, "3PT INT": [None]*10 })
+
+# Session state inicialización
+if "realizados_df" not in st.session_state:
+    st.session_state.realizados_df = create_empty_df_realizados()
+if "intentados_df" not in st.session_state:
+    st.session_state.intentados_df = create_empty_df_intentados()
+if "completas_df" not in st.session_state:
+    st.session_state.completas_df = create_empty_df_completas()
+
+# DOBLES REALIZADOS
 with tabs[0]:
     st.header("🎯 Dobles Realizados")
-    columns = ["Puntos", "Triples", "Libres"]
-    df = reset_dataframe(columns, "dobles_realizados")
+    if st.button("🧹 Borrar datos", key="reset_realizados"):
+        st.session_state.realizados_df = create_empty_df_realizados()
+        st.success("Datos reiniciados correctamente")
 
-    df = st.data_editor(df, use_container_width=True, num_rows="fixed", key="dobles_realizados_editor")
+    df = st.data_editor(st.session_state.realizados_df, num_rows="fixed", use_container_width=True, key="editor_realizados")
 
     if df.dropna().shape[0] == 10:
-        df["Puntos"] = pd.to_numeric(df["Puntos"], errors="coerce")
-        df["Triples"] = pd.to_numeric(df["Triples"], errors="coerce")
-        df["Libres"] = pd.to_numeric(df["Libres"], errors="coerce")
-        df = df.dropna(subset=["Puntos", "Triples", "Libres"])
         df["Dobles"] = (df["Puntos"] - df["Triples"] * 3 - df["Libres"]) / 2
         st.dataframe(df, use_container_width=True)
-        linea = st.number_input("🔢 Línea a evaluar", min_value=0.0, step=0.5, key="linea_realizados")
-        aciertos = (df["Dobles"] > linea).sum()
-        st.success(f"Aciertos: {aciertos}/10")
 
-# --- Dobles Intentados ---
+# DOBLES INTENTADOS
 with tabs[1]:
-    st.header("🏹 Dobles Intentados")
-    columns = ["FGA (Tiros de campo intentados)", "Triples intentados"]
-    df = reset_dataframe(columns, "dobles_intentados")
+    st.header("🎯 Dobles Intentados")
+    if st.button("🧹 Borrar datos", key="reset_intentados"):
+        st.session_state.intentados_df = create_empty_df_intentados()
+        st.success("Datos reiniciados correctamente")
 
-    df = st.data_editor(df, use_container_width=True, num_rows="fixed", key="dobles_intentados_editor")
+    df2 = st.data_editor(st.session_state.intentados_df, num_rows="fixed", use_container_width=True, key="editor_intentados")
 
-    if df.dropna().shape[0] == 10:
-        df[columns[0]] = pd.to_numeric(df[columns[0]], errors="coerce")
-        df[columns[1]] = pd.to_numeric(df[columns[1]], errors="coerce")
-        df = df.dropna()
-        df["Dobles Intentados"] = df[columns[0]] - df[columns[1]]
-        st.dataframe(df, use_container_width=True)
-        linea = st.number_input("🔢 Línea a evaluar", min_value=0.0, step=0.5, key="linea_intentados")
-        aciertos = (df["Dobles Intentados"] > linea).sum()
-        st.success(f"Aciertos: {aciertos}/10")
+    if df2.dropna().shape[0] == 10:
+        df2["Dobles Intentados"] = df2["FGA (Tiros de campo intentados)"] - df2["Triples intentados"]
+        st.dataframe(df2, use_container_width=True)
 
-# --- Estadísticas Completas ---
+# ESTADÍSTICAS COMPLETAS
 with tabs[2]:
     st.header("📊 Estadísticas Completas (Carga manual)")
-    columns = ["Puntos", "Triples", "Libres", "FGA", "3PT INT"]
-    df = reset_dataframe(columns, "completas")
+    if st.button("🧹 Borrar datos", key="reset_completas"):
+        st.session_state.completas_df = create_empty_df_completas()
+        st.success("Datos reiniciados correctamente")
 
-    df = st.data_editor(df, use_container_width=True, num_rows="fixed", key="completas_editor")
-    st.markdown("Esta sección es informativa. No realiza cálculos por ahora.")
+    df3 = st.data_editor(st.session_state.completas_df, num_rows="fixed", use_container_width=True, key="editor_completas")
 
-# --- Apuesta del Día ---
-with tabs[3]:
-    st.header("📝 Apuesta del Día")
-    st.markdown("Esta apuesta fue actualizada manualmente por **@BlainkEiou**.")
-    st.markdown("📬 Ante cualquier duda o sugerencia, contactame por Telegram: [@BlainkEiou](https://t.me/BlainkEiou)")
-    st.markdown("📅 **Última actualización:** 2025-03-19 00:00:00")
-    try:
-        df_apuesta = pd.read_excel("apuesta_dia.xlsx", engine="openpyxl")
-        df_apuesta = df_apuesta.fillna("")
-        st.dataframe(df_apuesta, use_container_width=True, hide_index=True)
-    except Exception as e:
-        st.error(f"Error al leer la apuesta del día: {e}")
+    if df3.dropna().shape[0] == 10:
+        df3["Dobles Realizados"] = (df3["Puntos"] - df3["Triples"] * 3 - df3["Libres"]) / 2
+        df3["Dobles Intentados"] = df3["FGA"] - df3["3PT INT"]
+        st.dataframe(df3, use_container_width=True)
