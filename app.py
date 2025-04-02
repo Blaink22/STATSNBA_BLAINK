@@ -3,38 +3,8 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="NBA Stats Analyzer", layout="centered")
-
-# Mostrar pantalla de bienvenida primero
-if "ingreso" not in st.session_state:
-    st.session_state["ingreso"] = False
-
-if not st.session_state["ingreso"]:
-    st.title("🏀 NBA Stats Analyzer")
-    st.markdown("📊 *Análisis, estadísticas y apuestas del día en un solo lugar*")
-
-    st.markdown("---")
-    archivo_demo = st.file_uploader("Subí el archivo de la Apuesta del Día para continuar (Excel)", type=["xlsx"], key="bienvenida")
-
-    fecha_actual = "Sin archivo cargado"
-    if archivo_demo:
-        try:
-            df_fecha = pd.read_excel(archivo_demo, header=None)
-            if not df_fecha.empty and pd.notna(df_fecha.iloc[0, 0]):
-                fecha_actual = df_fecha.iloc[0, 0]
-        except:
-            fecha_actual = "Error al leer fecha"
-
-    st.markdown(f"📅 Última actualización: **{fecha_actual}**")
-
-    if st.button("Ingresar al análisis"):
-        st.session_state["ingreso"] = True
-
-    st.markdown("---")
-    st.caption("Creado por Blaink 🧠")
-    st.stop()
-
-# App principal
 st.title("🏀 NBA Stats Analyzer")
+
 tabs = st.tabs([
     "Dobles Realizados",
     "Dobles Intentados",
