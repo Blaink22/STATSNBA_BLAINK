@@ -62,7 +62,7 @@ with tabs[3]:
     st.header("📝 Apuesta del Día")
     st.markdown("Esta apuesta fue actualizada manualmente por **@BlainkEiou**.")
     st.markdown("📬 Ante cualquier duda o sugerencia, contactame por Telegram: [@BlainkEiou](https://t.me/BlainkEiou)")
-    st.markdown("📅 **Última actualización:** 2025-03-19 00:00:00")
+    st.markdown("📅 **Última actualización:** 2025-04-03 17:35hs")
     try:
         df_apuesta = pd.read_excel("apuesta_dia.xlsx", engine="openpyxl")
         st.table(df_apuesta)
