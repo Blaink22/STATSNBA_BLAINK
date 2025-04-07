@@ -1,70 +1,130 @@
+
 import streamlit as st
 import pandas as pd
+import os
 
 st.set_page_config(page_title="NBA Stats Analyzer", layout="wide")
-st.title("🏀 NBA Stats Analyzer")
 
-tabs = st.tabs(["Dobles Realizados", "Dobles Intentados", "Estadísticas Completas", "Apuesta del Día"])
+st.markdown("""<style>
+    .stDataFrame tbody td {
+        text-align: center;
+    }
+</style>""", unsafe_allow_html=True)
 
-with tabs[0]:
-    st.header("🎯 Dobles Realizados")
-    df = pd.DataFrame({
-        "Puntos": [None]*10,
-        "Triples": [None]*10,
-        "Libres": [None]*10
+if "show_changelog" not in st.session_state:
+    st.session_state.show_changelog = True
+
+if st.session_state.show_changelog:
+    st.title("📢 Actualización 1.0 - ¡Ya disponible!")
+
+    st.markdown("""
+    Nos complace anunciar que ya está disponible la **última versión** de nuestra plataforma, con un diseño más moderno y una serie de funciones que llevan la experiencia al siguiente nivel.  
+    Estas son las principales novedades:
+
+    ### 🚀 Mejoras Generales
+    - ✅ Interfaz más profesional y pulida.
+    - ✅ Estilo **oscuro** renovado y visualmente atractivo.
+    - ✅ Pantalla de **"Actualizaciones Recientes"** al iniciar la app.
+
+    ### 🏀 Secciones F.G.M (Tiros de Campo Acertados) y F.G.A (Tiros de Campo Intentados)
+    - ✅ Nuevo selector para elegir el tipo de línea a calcular:
+        - F.G.M: Dobles, Triples, Puntos o Libres.
+        - F.G.A: Dobles intentados, Triples intentados o Tiros de campo intentados.
+    - ✅ Posibilidad de seleccionar **cantidad de partidos** a evaluar: 10, 20 o personalizada (de 3 a 30).
+    - ✅ Botón para **limpiar tabla** rápidamente en ambas secciones.
+    - ✅ Lógica de cálculo precisa que muestra **aciertos sobre la línea** (ejemplo: 7/10, 9/10).
+    - ✅ Nuevo gráfico que se **despliega automáticamente** al calcular una línea para una mejor visualización de los datos.
+
+    ¡Gracias por acompañarnos en este proyecto! 🎯  
+    """)
+
+    if st.button("🚀 Ingresar a la app"):
+        st.session_state.show_changelog = False
+    st.stop()
+
+page = st.sidebar.radio("Navegación", ["TIROS DE CAMPO ACERTADOS (F.G.M)", "TIROS DE CAMPO INTENTADOS (F.G.A)", "Apuesta del Día"])
+
+if "df_fgm" not in st.session_state:
+    st.session_state.df_fgm = pd.DataFrame({
+        "Puntos": [0]*10,
+        "Triples": [0]*10,
+        "Libres": [0]*10
     })
-    df = st.data_editor(df, use_container_width=True, num_rows="fixed", key="dobles_realizados")
 
-    if df.dropna().shape[0] == 10:
-        df["Puntos"] = pd.to_numeric(df["Puntos"], errors="coerce")
-        df["Triples"] = pd.to_numeric(df["Triples"], errors="coerce")
-        df["Libres"] = pd.to_numeric(df["Libres"], errors="coerce")
-        df = df.dropna(subset=["Puntos", "Triples", "Libres"])
-        df["Dobles"] = (df["Puntos"] - df["Triples"] * 3 - df["Libres"]) / 2
-        st.dataframe(df, use_container_width=True)
-        linea = st.number_input("🔢 Línea a evaluar", min_value=0.0, step=0.5)
-        aciertos = (df["Dobles"] > linea).sum()
-        st.success(f"Aciertos: {aciertos}/10" if aciertos > 6 else
-                   f"Aciertos: {aciertos}/10", icon="✅" if aciertos > 6 else "⚠️")
-
-with tabs[1]:
-    st.header("🎯 Dobles Intentados")
-    df = pd.DataFrame({
-        "FGA (Tiros de campo intentados)": [None]*10,
-        "Triples intentados": [None]*10
+if "df_fga" not in st.session_state:
+    st.session_state.df_fga = pd.DataFrame({
+        "FGA (Tiros de campo intentados)": [0]*10,
+        "Triples intentados": [0]*10
     })
-    df = st.data_editor(df, use_container_width=True, num_rows="fixed", key="dobles_intentados")
 
-    if df.dropna().shape[0] == 10:
-        df["FGA (Tiros de campo intentados)"] = pd.to_numeric(df["FGA (Tiros de campo intentados)"], errors="coerce")
-        df["Triples intentados"] = pd.to_numeric(df["Triples intentados"], errors="coerce")
-        df = df.dropna()
-        df["Dobles Intentados"] = df["FGA (Tiros de campo intentados)"] - df["Triples intentados"]
-        st.dataframe(df, use_container_width=True)
-        linea = st.number_input("🔢 Línea a evaluar", min_value=0.0, step=0.5, key="linea_int")
-        aciertos = (df["Dobles Intentados"] > linea).sum()
-        st.success(f"Aciertos: {aciertos}/10" if aciertos > 6 else
-                   f"Aciertos: {aciertos}/10", icon="✅" if aciertos > 6 else "⚠️")
+if page == "TIROS DE CAMPO ACERTADOS (F.G.M)":
+    st.title("TIROS DE CAMPO ACERTADOS (F.G.M)")
+    tipo = st.selectbox("Tipo de línea a calcular", ["Dobles Acertados", "Triples Acertados", "Libres Acertados", "Puntos Acertados"])
+    edited_df = st.data_editor(st.session_state.df_fgm.copy(), use_container_width=True, num_rows="fixed", key="fgm_editor")
 
-with tabs[2]:
-    st.header("📊 Estadísticas Completas (Carga manual)")
-    df = pd.DataFrame({
-        "Puntos": [None]*10,
-        "Triples": [None]*10,
-        "Libres": [None]*10,
-        "FGA": [None]*10,
-        "3PT INT": [None]*10
-    })
-    df = st.data_editor(df, use_container_width=True, num_rows="fixed", key="completo")
-    st.markdown("Esta sección es informativa. No realiza cálculos por ahora.")
+    if st.button("🧹 Limpiar tabla (FGM)"):
+        st.session_state.df_fgm.loc[:, :] = 0
+        st.rerun()
 
-with tabs[3]:
-    st.header("📝 Apuesta del Día")
-    st.markdown("Esta apuesta fue actualizada manualmente por **@BlainkEiou**.")
-    st.markdown("📬 Ante cualquier duda o sugerencia, contactame por Telegram: [@BlainkEiou](https://t.me/BlainkEiou)")
-    st.markdown("📅 **Última actualización:** 2025-04-06 07:15hs")
-    try:
-        df_apuesta = pd.read_excel("apuesta_dia.xlsx", engine="openpyxl")
-        st.table(df_apuesta)
-    except Exception as e:
-        st.error(f"Error al leer la apuesta del día: {e}")
+    linea = st.number_input("Línea a evaluar", min_value=0.0, step=0.5, key="linea_fgm")
+    cantidad = st.slider("Cantidad de partidos a analizar", 3, 30, 10, key="slider_fgm")
+
+    if st.button("Calcular línea (FGM)"):
+        st.session_state.df_fgm = edited_df.copy()
+        try:
+            df = st.session_state.df_fgm.head(cantidad).apply(pd.to_numeric, errors="coerce")
+            if tipo == "Dobles Acertados":
+                df["Dobles"] = (df["Puntos"] - df["Triples"] * 3 - df["Libres"]) / 2
+                valores = df["Dobles"]
+            elif tipo == "Triples Acertados":
+                valores = df["Triples"]
+            elif tipo == "Libres Acertados":
+                valores = df["Libres"]
+            else:
+                valores = df["Puntos"]
+            aciertos = (valores > linea).sum()
+            st.success(f"Aciertos: {aciertos} / {len(valores)}")
+            st.bar_chart(valores)
+        except Exception as e:
+            st.error(f"Error al calcular: {e}")
+
+elif page == "TIROS DE CAMPO INTENTADOS (F.G.A)":
+    st.title("TIROS DE CAMPO INTENTADOS (F.G.A)")
+    tipo = st.selectbox("Tipo de línea a calcular", ["Tiros de campo intentados", "Triples intentados", "Dobles intentados"])
+    edited_df = st.data_editor(st.session_state.df_fga.copy(), use_container_width=True, num_rows="fixed", key="fga_editor")
+
+    if st.button("🧹 Limpiar tabla (FGA)"):
+        st.session_state.df_fga.loc[:, :] = 0
+        st.rerun()
+
+    linea = st.number_input("Línea a evaluar", min_value=0.0, step=0.5, key="linea_fga")
+    cantidad = st.slider("Cantidad de partidos a analizar", 3, 30, 10, key="slider_fga")
+
+    if st.button("Calcular línea (FGA)"):
+        st.session_state.df_fga = edited_df.copy()
+        try:
+            df2 = st.session_state.df_fga.head(cantidad).apply(pd.to_numeric, errors="coerce")
+            if tipo == "Dobles intentados":
+                df2["Dobles intentados"] = df2["FGA (Tiros de campo intentados)"] - df2["Triples intentados"]
+                valores = df2["Dobles intentados"]
+            elif tipo == "Triples intentados":
+                valores = df2["Triples intentados"]
+            else:
+                valores = df2["FGA (Tiros de campo intentados)"]
+            aciertos = (valores > linea).sum()
+            st.success(f"Aciertos: {aciertos} / {len(valores)}")
+            st.bar_chart(valores)
+        except Exception as e:
+            st.error(f"Error al calcular: {e}")
+
+elif page == "Apuesta del Día":
+    st.title("📋 Apuesta del Día")
+    st.markdown("""
+    Esta apuesta fue actualizada manualmente por **@BlainkEiou**.  
+    📬 Ante cualquier duda o sugerencia, contactame por Telegram: [@BlainkEiou](https://t.me/BlainkEiou)
+    """)
+    if os.path.exists("apuesta_dia.xlsx"):
+        df_apuesta = pd.read_excel("apuesta_dia.xlsx")
+        st.dataframe(df_apuesta, use_container_width=True)
+    else:
+        st.warning("⚠️ No se encontró el archivo 'apuesta_dia.xlsx'. Asegurate de colocarlo en la carpeta raíz.")
